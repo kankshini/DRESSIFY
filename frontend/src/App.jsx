@@ -3,6 +3,8 @@ import Filters from './components/Filters'
 import OutfitCard from './components/OutfitCard'
 import axios from 'axios'
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000'
+
 export default function App() {
   const [filters, setFilters] = useState({ country: '', gender: '', season: '', festival: '' })
   const [outfits, setOutfits] = useState([])
@@ -11,7 +13,7 @@ export default function App() {
   async function fetchOutfits() {
     setLoading(true)
     try {
-      const res = await axios.get('http://localhost:4000/api/outfits', { params: filters })
+      const res = await axios.get(`${API_BASE_URL}/api/outfits`, { params: filters })
       setOutfits(res.data.data || [])
     } catch (e) {
       console.error('Failed to fetch outfits', e)

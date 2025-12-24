@@ -5,18 +5,28 @@ const Joi = require('joi');
 const fs = require('fs');
 const path = require('path');
 
+let db = null;
 const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH || path.join(__dirname, 'serviceAccount.json');
-if (fs.existsSync(serviceAccountPath)) {
-  admin.initializeApp({
-    credential: admin.credential.cert(require(serviceAccountPath))
-  });
-} else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-  admin.initializeApp();
-} else {
-  console.warn('Firebase service account not found. Firestore disabled until configured.');
-}
 
-const db = admin.firestore ? admin.firestore() : null;
+if (fs.existsSync(serviceAccountPath)) {
+  try {
+    admin.initializeApp({
+      credential: admin.credential.cert(require(serviceAccountPath))
+    });
+    db = admin.firestore();
+  } catch (err) {
+    console.warn('Firebase initialization failed:', err.message);
+  }
+} else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+  try {
+    admin.initializeApp();
+    db = admin.firestore();
+  } catch (err) {
+    console.warn('Firebase initialization failed:', err.message);
+  }
+} else {
+  console.warn('Firebase service account not found. Using sample data fallback.');
+}
 
 const app = express();
 app.use(cors());
@@ -25,6 +35,12 @@ app.use(express.json());
 async function verifyToken(req, res, next) {
   const auth = req.headers.authorization;
   if (!auth || !auth.startsWith('Bearer ')) return next();
+  
+  if (!admin.apps.length) {
+    console.warn('Firebase not initialized, skipping token verification');
+    return next();
+  }
+  
   const idToken = auth.split('Bearer ')[1];
   try {
     const decoded = await admin.auth().verifyIdToken(idToken);

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000'
+
 export default function OutfitCard({ outfit }) {
   const [suggestions, setSuggestions] = useState(null)
   const [expanded, setExpanded] = useState(false)
@@ -11,7 +13,7 @@ export default function OutfitCard({ outfit }) {
 
   async function fetchSuggestions() {
     try {
-      const res = await axios.get('http://localhost:4000/api/suggestions')
+      const res = await axios.get(`${API_BASE_URL}/api/suggestions`)
       const relevant = res.data.data?.find(s => s.outfitTitle === outfit.title)
       setSuggestions(relevant)
     } catch (e) {
